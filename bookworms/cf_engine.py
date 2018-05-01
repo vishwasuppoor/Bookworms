@@ -293,7 +293,8 @@ class cf_engine(object):
         overall_recall = total_recall/size
         overall_coverage = total_coverage/size
         overall_hit_rate = total_hit_rate/size
-        with open('engine_evaluation.txt', 'w') as f:
+        with open('engine_evaluation_'+str(self.dataset), 'w') as f:
+            f.write('Input size'+str(num_users)+'\n')
             f.write('RMSE ='+str(overall_RMSE)+'\n')
             f.write('MAE ='+str(overall_MAE)+'\n')
             f.write('accuracy ='+str(overall_accuracy)+'\n')
