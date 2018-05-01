@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<!-- <script src="../lib/d3.v3.min.js" charset="utf-8"></script> -->
+<style>
+
+path.link {
+  fill: none;
+  stroke: blue;
+  stroke-width: 1.5px;
+}
+
+circle {
+  fill: #ccc;
+  stroke: blue;
+  stroke: black;
+  stroke-width: 1.5px;
+}
+
+text {
+  fill: #000;
+  font: 12px sans-serif;
+  pointer-events: none;
+}
+
+</style>
+<body>
+<script>
+
+// get the data
+// var links = ['{{ mylinks|safe }}'];
+
+// d3.json("book_recommenddata.json", function(error,data) {
+//   if (error) throw error;
+//   console.log(data)
+// });
+var links1 = JSON.parse('{{ mylinks1|tojson|safe }}')
+
+console.log(links1);
+
+
+var links = JSON.parse('{{ mylinks|tojson|safe }}')
+
+console.log(links);
+var nodes = {};
+
+// Compute the distinct nodes from the links.
+links.forEach(function(link) {
+    link.source = nodes[link.source] ||
+        (nodes[link.source] = {name: link.source});
+    link.target = nodes[link.target] ||
+        (nodes[link.target] = {name: link.target});
+});
+
+var width = 1300,
+    height = 800,
+    color = d3.scale.category20c();
+
+var linkSize = 240
+
+var force = d3.layout.force()
+    .nodes(d3.values(nodes))
+    .links(links)
+    .size([width, height])
+    .linkDistance(linkSize)
+    .charge(-500)
+    .on("tick", tick)
+    .start()
+// Set the range
+//var  v = d3.scale.log().range([.5, 1.5*d3.max(links, function(d) { return d.value;})]);
+
+// Scale the range of the data
+//v.domain([.5, 1.5*d3.max(links, function(d) { return d.value; })]);
+var  v = d3.scale.linear().range([0, d3.max(links, function(d) { return d.value;})]);
+
+// Scale the range of the data
+//v.domain([0, d3.max(links, function(d) { return d.value; })]);
+v.domain([0, 30]);
+console.log(d3.max(links, function(d) { return d.value;}))
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+// build the arrow.
+svg.append("svg:defs").selectAll("marker")
+    .data(["end"])      // Different link/path types can be defined here
+  .enter().append("svg:marker")    // This section adds in the arrows
+    .attr("id", String)
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 15)
+    .attr("refY", -1.5)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .attr("orient", "auto")
+  .append("svg:path")
+    .attr("d", "M0,-5L10,0L0,5");
+
+// add the links and the arrows
+var path = svg.append("svg:g").selectAll("path")
+    .data(force.links())
+    .enter().append("svg:path")
+    .attr("class", function(d) { return "link " + d.type; });
+
+
+// define the nodes
+var node = svg.selectAll(".node")
+    .data(force.nodes())
+  .enter().append("g")
+    .attr("class", "node")
+    .call(force.drag);
+
+// add the nodes
+node.append("circle")
+    .attr("r", function(d) {return (v(d.weight))})
+    //Simply changing the value of d.fixed indicates to the force field it is fixed node. This took me an extremely long time to figure out :(
+    .attr("style" ,"fill : lightgrey")
+    .on("dblclick", function(d){
+      if (d.fixed == 0) {
+        d.fixed = 1
+        console.log("Pinned node " + d.name)
+        this.setAttribute("style", "fill : goldenrod")}
+      else {
+        d.fixed = 0
+        console.log("Unpinned node " + d.name)
+         this.setAttribute("style","fill : lightgrey")}});
+
+//for temporary visualization
+
+var data = [{x1: 5, x2: 400, y1: 5, y2: 240},
+{x1: 5, x2: 5, y1: 5, y2: 5},
+{x1: 5, x2: 5, y1: 5, y2: 5}];
+
+var rects = svg.selectAll("foo")
+  .data(data)
+  .enter()
+  .append("rect")
+  .attr("x", d=> d.x1)
+  .attr("y", d=> d.y1)
+  .attr("width", d=> d.x2 - d.x1)
+  .attr("height", d=> d.y2 - d.y1)
+  .attr("fill", "#80a6b5");
+
+svg.append("text")
+   .attr("class", "text")
+   .attr("x", 10)
+   .attr("y", 5)
+   .attr("dy", ".35em")
+   .text("__________________")
+
+svg.append("text")
+   .attr("class", "text")
+   .attr("x", 10)
+   .attr("y", 20)
+   .attr("dy", ".35em")
+   .text("Recommended Books")
+
+svg.append("text")
+   .attr("class", "text")
+   .attr("x", 10)
+   .attr("y", 25)
+   .attr("dy", ".35em")
+   .text("__________________")
+
+svg.append("text")
+   .attr("class", "text")
+   .attr("x", 10)
+   .attr("y", 40)
+   .attr("dy", ".35em")
+   .text(links1[0].book)
+
+svg.append("text")
+   .attr("class", "text")
+   .attr("x", 10)
+   .attr("y", 60)
+   .attr("dy", ".35em")
+   .text(links1[1].book)
+
+svg.append("text")
+   .attr("class", "text")
+   .attr("x", 10)
+   .attr("y", 80)
+   .attr("dy", ".35em")
+   .text(links1[2].book)
+
+svg.append("text")
+   .attr("class", "text")
+   .attr("x", 10)
+   .attr("y", 100)
+   .attr("dy", ".35em")
+   .text(links1[3].book)
+
+svg.append("text")
+   .attr("class", "text")
+   .attr("x", 10)
+   .attr("y", 120)
+   .attr("dy", ".35em")
+   .text(links1[4].book)
+svg.append("text")
+   .attr("class", "text")
+   .attr("x", 10)
+   .attr("y", 140)
+   .attr("dy", ".35em")
+   .text(links1[5].book)
+
+svg.append("text")
+   .attr("class", "text")
+   .attr("x", 10)
+   .attr("y", 160)
+   .attr("dy", ".35em")
+   .text(links1[6].book)
+
+svg.append("text")
+   .attr("class", "text")
+   .attr("x", 10)
+   .attr("y", 180)
+   .attr("dy", ".35em")
+   .text(links1[7].book)
+
+svg.append("text")
+   .attr("class", "text")
+   .attr("x", 10)
+   .attr("y", 200)
+   .attr("dy", ".35em")
+   .text(links1[8].book)
+
+svg.append("text")
+   .attr("class", "text")
+   .attr("x", 10)
+   .attr("y", 220)
+   .attr("dy", ".35em")
+   .text(links1[9].book)
+
+node.append("text")
+    .attr("dx", function(d) { return (v(d.weight+1))})
+    .attr("dy", 0)
+    .text(function(d) {return d.name})
+    .attr("font-size", "20px");
+
+
+// add the curvy lines
+function tick() {
+    path.attr("d", function(d) {
+        var dx = d.target.x - d.source.x,
+            dy = d.target.y - d.source.y,
+            dr = Math.sqrt(dx * dx + dy * dy);
+        return "M" +
+            d.source.x + "," +
+            d.source.y + "A" +
+            dr + "," + dr + " 0 0,1 " +
+            d.target.x + "," +
+            d.target.y})
+        .attr("style", function(d) {
+          if (d.value < 3.0) { var color = "#80a6b5" }
+          else if (d.value <=4.0) { var color = "blue" }
+          else { var color = "green"}
+          return "stroke: " + color})
+        .attr("stroke-width", 5);
+    node.attr("transform", function(d) {
+		    {return "translate(" + d.x + "," + d.y + ")"} });
+};
+
+</script>
+</body>
+</html>
